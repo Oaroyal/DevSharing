@@ -41,18 +41,34 @@ RandomBasis AS
           ) AS RandomNumber
    FROM   RowExpansion AS E
 ),
+RandomGroups AS
+(  SELECT R.SourceNumber,
+          R.RandomNumber,
+          ( CONVERT(BIGINT, (R.RandomNumber * 01087)) % 100
+          ) AS GroupA,
+          ( CONVERT(BIGINT, (R.RandomNumber * 70211)) % 100
+          ) AS GroupB,
+          ( CONVERT(BIGINT, (R.RandomNumber * 03559)) % 100
+          ) AS GroupC,
+          ( CONVERT(BIGINT, (R.RandomNumber * 20053)) % 100
+          ) AS GroupD,
+          ( CONVERT(BIGINT, (R.RandomNumber * 07411)) % 100
+          ) AS GroupE,
+          ( CONVERT(BIGINT, (R.RandomNumber * 10093)) % 100
+          ) AS GroupF
+   FROM RandomBasis AS R
+),
 OrgBasis AS
 (  SELECT R.SourceNumber,
           CASE (CONVERT(INT, (R.RandomNumber * 397.0)) %  5)
              WHEN 0 THEN NULL
              ELSE CONVERT(INT, (CONVERT(BIGINT, (R.RandomNumber * 97534.0)) % 16384))
           END AS OrgIDOwner,
-          CASE (CONVERT(INT, (R.RandomNumber * 397.0)) %  5)
-             WHEN 0 THEN 'HEADQUARTERS'
-             WHEN 1 THEN 'DIVISION'
-             WHEN 2 THEN 'SATELLITE'
-             WHEN 3 THEN 'OUTLET'
-             WHEN 4 THEN 'WAREHOUSE'
+          CASE WHEN (R.GroupA >=  0 AND R.GroupA <  5 ) THEN 'HEADQUARTERS'
+               WHEN (R.GroupA >=  5 AND R.GroupA < 20 ) THEN 'DIVISION'
+               WHEN (R.GroupA >= 20 AND R.GroupA < 50 ) THEN 'SATELLITE'
+               WHEN (R.GroupA >= 50 AND R.GroupA < 80 ) THEN 'OUTLET'
+               ELSE                                          'WAREHOUSE'
           END AS OrgType,
           CASE (CONVERT(INT, (R.RandomNumber * 937.0)) % 11)
              WHEN  0 THEN 'CALIFORNIA-A'
@@ -77,7 +93,7 @@ OrgBasis AS
           END AS Performance,
           DATEADD(DAY, (CONVERT(INT, (R.RandomNumber * 32982.0)) % 7300), '1985-01-01') AS Established,
           (CONVERT(INT, (R.RandomNumber * 857.0)) +  3) AS Staff
-   FROM   RandomBasis AS R
+   FROM   RandomGroups AS R
 )
 INSERT INTO #Org (
    OrgIDOwner,
