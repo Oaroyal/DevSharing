@@ -54,8 +54,8 @@ RandomGroups AS
 ),
 OrgBasis AS
 (  SELECT R.SourceNumber,
-          CASE (CONVERT(INT, (R.RandomNumber * 397.0)) %  5)
-             WHEN 0 THEN NULL
+          CASE WHEN (R.GroupA >=  0 AND R.GroupA <  5 )
+             THEN NULL
              ELSE CONVERT(INT, (CONVERT(BIGINT, (R.RandomNumber * 97534.0)) % 16384))
           END AS OrgIDOwner,
           CASE WHEN (R.GroupA >=  0 AND R.GroupA <  5 ) THEN 'HEADQUARTERS'
