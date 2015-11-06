@@ -14,18 +14,12 @@ GO
 WITH
 RowBasis AS
 (  SELECT 1 AS N UNION ALL
-   SELECT 2 AS N UNION ALL
-   SELECT 3 AS N UNION ALL
-   SELECT 4 AS N
+   SELECT 1 AS N UNION ALL
+   SELECT 1 AS N UNION ALL
+   SELECT 1 AS N
 ),
 RowExpansion AS
-(  SELECT   A.N
-          + ((B.N - 1) * 4)
-          + ((C.N - 1) * 16)
-          + ((D.N - 1) * 64)
-          + ((E.N - 1) * 256)
-          + ((F.N - 1) * 1024)
-          + ((G.N - 1) * 4096) AS X
+(  SELECT ROW_NUMBER() OVER (PARTITION BY 0 ORDER BY A.N) AS X
    FROM   RowBasis AS A
           CROSS JOIN RowBasis AS B
           CROSS JOIN RowBasis AS C
@@ -44,13 +38,13 @@ RandomBasis AS
 RandomGroups AS
 (  SELECT R.SourceNumber,
           R.RandomNumber,
-          ( CONVERT(BIGINT, (R.RandomNumber * 01087)) % 100
+          ( CONVERT(BIGINT, (R.RandomNumber * 20053)) % 100
           ) AS GroupA,
           ( CONVERT(BIGINT, (R.RandomNumber * 70211)) % 100
           ) AS GroupB,
           ( CONVERT(BIGINT, (R.RandomNumber * 03559)) % 100
           ) AS GroupC,
-          ( CONVERT(BIGINT, (R.RandomNumber * 20053)) % 100
+          ( CONVERT(BIGINT, (R.RandomNumber * 01087)) % 100
           ) AS GroupD,
           ( CONVERT(BIGINT, (R.RandomNumber * 07411)) % 100
           ) AS GroupE,
