@@ -14,7 +14,6 @@ CREATE TABLE #AutoSplice (
                                      ),
    [Item]         AS                 ( CASE WHEN ( [Position] > LEN([CommaData]) ) THEN NULL
                                             WHEN ( CHARINDEX(',', [CommaData], [Position]) = 0 ) THEN SUBSTRING([CommaData], [Position], (LEN([CommaData]) - [Position]) + 1)
-                                            WHEN ( (CHARINDEX(',', [CommaData], [Position]) - [Position]) < 1 ) THEN NULL
                                             ELSE SUBSTRING([CommaData], [Position], CHARINDEX(',', [CommaData], [Position]) - [Position])
                                        END
                                      )
