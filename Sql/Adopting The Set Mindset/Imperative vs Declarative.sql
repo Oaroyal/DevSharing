@@ -115,54 +115,53 @@ SET @RightIN = 1023447;
 
 WITH
 Inputs
-AS (  SELECT CONVERT(DECIMAL(19, 0), (I.RHS & 2147483647) + (CASE (I.RHS & -2147483648) WHEN 0 THEN 0 ELSE 2147483648 END)) AS RHS,
-             CONVERT(DECIMAL(19, 0), (I.LHS & 2147483647) + (CASE (I.LHS & -2147483648) WHEN 0 THEN 0 ELSE 2147483648 END)) AS LHS
-      FROM   ( SELECT CASE WHEN (@RightIN < @LeftIN) THEN @RightIN ELSE @LeftIN  END AS RHS,
-                      CASE WHEN (@RightIN < @LeftIN) THEN @LeftIN  ELSE @RightIN END AS LHS
-             ) I
+AS (  SELECT CASE WHEN (@RightIN < @LeftIN) THEN @RightIN ELSE @LeftIN  END AS RHS,
+             CASE WHEN (@RightIN < @LeftIN) THEN @LeftIN  ELSE @RightIN END AS LHS
    ),
 Bits
-AS (  SELECT CONVERT(DECIMAL(19, 0), 2147483648) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0), 1073741824) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),  536870912) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),  268435456) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),  134217728) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),   67108864) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),   33554432) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),   16777216) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),    8388608) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),    4194304) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),    2097152) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),    1048576) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),     524288) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),     262144) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),     131072) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),      65536) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),      32768) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),      16384) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),       8192) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),       4096) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),       2048) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),       1024) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),        512) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),        256) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),        128) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),         64) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),         32) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),         16) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),          8) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),          4) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),          2) AS Value UNION ALL
-      SELECT CONVERT(DECIMAL(19, 0),          1) AS Value
+AS (  SELECT -2147483648 AS Value, 1 AS [Sign] UNION ALL
+      SELECT  1073741824 AS Value, 0 AS [Sign] UNION ALL
+      SELECT   536870912 AS Value, 0 AS [Sign] UNION ALL
+      SELECT   268435456 AS Value, 0 AS [Sign] UNION ALL
+      SELECT   134217728 AS Value, 0 AS [Sign] UNION ALL
+      SELECT    67108864 AS Value, 0 AS [Sign] UNION ALL
+      SELECT    33554432 AS Value, 0 AS [Sign] UNION ALL
+      SELECT    16777216 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     8388608 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     4194304 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     2097152 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     1048576 AS Value, 0 AS [Sign] UNION ALL
+      SELECT      524288 AS Value, 0 AS [Sign] UNION ALL
+      SELECT      262144 AS Value, 0 AS [Sign] UNION ALL
+      SELECT      131072 AS Value, 0 AS [Sign] UNION ALL
+      SELECT       65536 AS Value, 0 AS [Sign] UNION ALL
+      SELECT       32768 AS Value, 0 AS [Sign] UNION ALL
+      SELECT       16384 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        8192 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        4096 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        2048 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        1024 AS Value, 0 AS [Sign] UNION ALL
+      SELECT         512 AS Value, 0 AS [Sign] UNION ALL
+      SELECT         256 AS Value, 0 AS [Sign] UNION ALL
+      SELECT         128 AS Value, 0 AS [Sign] UNION ALL
+      SELECT          64 AS Value, 0 AS [Sign] UNION ALL
+      SELECT          32 AS Value, 0 AS [Sign] UNION ALL
+      SELECT          16 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           8 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           4 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           2 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           1 AS Value, 0 AS [Sign]
    )
-SELECT I.RHS               AS RightValueRaw,
-       B.Value             AS ShiftValue,
-       I.LHS               AS LeftValueRaw,
-       (I.LHS * B.Value)   AS LeftValueShifted,
-       (I.LHS * B.Value) % 4294967296 AS LeftValueShiftedLower32
-FROM   Inputs AS I
-       INNER JOIN Bits AS B
-       ON ((FLOOR(I.RHS / B.Value) % 2) > 0);
+      SELECT I.RHS                  AS RightValueRaw,
+             B.Value                AS ShiftValue,
+             I.LHS                  AS LeftValueRaw,
+             P.Product              AS LeftValueShifted,
+             P.Product % 4294967296 AS LeftValueShiftedLower32
+      FROM   Inputs AS I
+             INNER JOIN Bits AS B
+             ON ((I.RHS & B.Value) != 0)
+             CROSS APPLY ( SELECT CONVERT(DECIMAL(19, 0), CASE B.[Sign] WHEN 1 THEN 2147483648 ELSE B.Value END) AS ValueDecimal ) AS D
+             CROSS APPLY ( SELECT CONVERT(DECIMAL(19, 0), I.LHS) * D.ValueDecimal AS Product ) AS P;
 
 -- RightValueRaw          :       775321 =                    10111101010010011001
 -- LeftValueRaw           :      1023447 =                    11111001110111010111
@@ -170,20 +169,64 @@ FROM   Inputs AS I
 -- ShiftValue             :       524288 =                    10000000000000000000
 -- LeftValueShifted       : 536580980736 = 111110011101110101110000000000000000000
 -- LeftValueShiftedLower32:   4005036032 =        11101110101110000000000000000000
+GO
+
+DECLARE @LeftIN  INT;
+DECLARE @RightIN INT;
+
+SET @LeftIN  =  775321;
+SET @RightIN = 1023447;
 
 WITH
+Inputs
+AS (  SELECT CASE WHEN (@RightIN < @LeftIN) THEN @RightIN ELSE @LeftIN  END AS RHS,
+             CASE WHEN (@RightIN < @LeftIN) THEN @LeftIN  ELSE @RightIN END AS LHS
+   ),
+Bits
+AS (  SELECT -2147483648 AS Value, 1 AS [Sign] UNION ALL
+      SELECT  1073741824 AS Value, 0 AS [Sign] UNION ALL
+      SELECT   536870912 AS Value, 0 AS [Sign] UNION ALL
+      SELECT   268435456 AS Value, 0 AS [Sign] UNION ALL
+      SELECT   134217728 AS Value, 0 AS [Sign] UNION ALL
+      SELECT    67108864 AS Value, 0 AS [Sign] UNION ALL
+      SELECT    33554432 AS Value, 0 AS [Sign] UNION ALL
+      SELECT    16777216 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     8388608 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     4194304 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     2097152 AS Value, 0 AS [Sign] UNION ALL
+      SELECT     1048576 AS Value, 0 AS [Sign] UNION ALL
+      SELECT      524288 AS Value, 0 AS [Sign] UNION ALL
+      SELECT      262144 AS Value, 0 AS [Sign] UNION ALL
+      SELECT      131072 AS Value, 0 AS [Sign] UNION ALL
+      SELECT       65536 AS Value, 0 AS [Sign] UNION ALL
+      SELECT       32768 AS Value, 0 AS [Sign] UNION ALL
+      SELECT       16384 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        8192 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        4096 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        2048 AS Value, 0 AS [Sign] UNION ALL
+      SELECT        1024 AS Value, 0 AS [Sign] UNION ALL
+      SELECT         512 AS Value, 0 AS [Sign] UNION ALL
+      SELECT         256 AS Value, 0 AS [Sign] UNION ALL
+      SELECT         128 AS Value, 0 AS [Sign] UNION ALL
+      SELECT          64 AS Value, 0 AS [Sign] UNION ALL
+      SELECT          32 AS Value, 0 AS [Sign] UNION ALL
+      SELECT          16 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           8 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           4 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           2 AS Value, 0 AS [Sign] UNION ALL
+      SELECT           1 AS Value, 0 AS [Sign]
+   ),
 PartialProducts
-AS (  SELECT 524288 AS ShiftValue, 536580980736 AS LeftValueShifted, 4005036032 AS LeftValueShiftedLower32 UNION ALL
-      SELECT 131072 AS ShiftValue, 134145245184 AS LeftValueShifted, 1001259008 AS LeftValueShiftedLower32 UNION ALL
-      SELECT  65536 AS ShiftValue,  67072622592 AS LeftValueShifted, 2648113152 AS LeftValueShiftedLower32 UNION ALL
-      SELECT  32768 AS ShiftValue,  33536311296 AS LeftValueShifted, 3471540224 AS LeftValueShiftedLower32 UNION ALL
-      SELECT  16384 AS ShiftValue,  16768155648 AS LeftValueShifted, 3883253760 AS LeftValueShiftedLower32 UNION ALL
-      SELECT   4096 AS ShiftValue,   4192038912 AS LeftValueShifted, 4192038912 AS LeftValueShiftedLower32 UNION ALL
-      SELECT   1024 AS ShiftValue,   1048009728 AS LeftValueShifted, 1048009728 AS LeftValueShiftedLower32 UNION ALL
-      SELECT    128 AS ShiftValue,    131001216 AS LeftValueShifted,  131001216 AS LeftValueShiftedLower32 UNION ALL
-      SELECT     16 AS ShiftValue,     16375152 AS LeftValueShifted,   16375152 AS LeftValueShiftedLower32 UNION ALL
-      SELECT      8 AS ShiftValue,      8187576 AS LeftValueShifted,    8187576 AS LeftValueShiftedLower32 UNION ALL
-      SELECT      1 AS ShiftValue,      1023447 AS LeftValueShifted,    1023447 AS LeftValueShiftedLower32
+AS (  SELECT I.RHS                  AS RightValueRaw,
+             B.Value                AS ShiftValue,
+             I.LHS                  AS LeftValueRaw,
+             P.Product              AS LeftValueShifted,
+             P.Product % 4294967296 AS LeftValueShiftedLower32
+      FROM   Inputs AS I
+             INNER JOIN Bits AS B
+             ON ((I.RHS & B.Value) != 0)
+             CROSS APPLY ( SELECT CONVERT(DECIMAL(19, 0), CASE B.[Sign] WHEN 1 THEN 2147483648 ELSE B.Value END) AS ValueDecimal ) AS D
+             CROSS APPLY ( SELECT CONVERT(DECIMAL(19, 0), I.LHS) * D.ValueDecimal AS Product ) AS P
    ),
 PartialProductsSums
 AS (  SELECT SUM(P.ShiftValue             ) AS SumOfShiftValue,
@@ -221,51 +264,50 @@ AS
 RETURN
    (  WITH
       Inputs
-      AS ( SELECT CONVERT(DECIMAL(19, 0), (I.RHS & 2147483647) + (CASE (I.RHS & -2147483648) WHEN 0 THEN 0 ELSE 2147483648 END)) AS RHS,
-                  CONVERT(DECIMAL(19, 0), (I.LHS & 2147483647) + (CASE (I.LHS & -2147483648) WHEN 0 THEN 0 ELSE 2147483648 END)) AS LHS
-           FROM   ( SELECT CASE WHEN (@RightIN < @LeftIN) THEN @RightIN ELSE @LeftIN  END AS RHS,
-                           CASE WHEN (@RightIN < @LeftIN) THEN @LeftIN  ELSE @RightIN END AS LHS
-                  ) I
+      AS (  SELECT CASE WHEN (@RightIN < @LeftIN) THEN @RightIN ELSE @LeftIN  END AS RHS,
+                   CASE WHEN (@RightIN < @LeftIN) THEN @LeftIN  ELSE @RightIN END AS LHS
          ),
       Bits
-      AS ( SELECT CONVERT(DECIMAL(19, 0), 2147483648) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0), 1073741824) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),  536870912) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),  268435456) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),  134217728) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),   67108864) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),   33554432) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),   16777216) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),    8388608) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),    4194304) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),    2097152) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),    1048576) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),     524288) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),     262144) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),     131072) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),      65536) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),      32768) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),      16384) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),       8192) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),       4096) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),       2048) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),       1024) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),        512) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),        256) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),        128) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),         64) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),         32) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),         16) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),          8) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),          4) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),          2) AS Value UNION ALL
-           SELECT CONVERT(DECIMAL(19, 0),          1) AS Value
+      AS (  SELECT -2147483648 AS Value, 1 AS [Sign] UNION ALL
+            SELECT  1073741824 AS Value, 0 AS [Sign] UNION ALL
+            SELECT   536870912 AS Value, 0 AS [Sign] UNION ALL
+            SELECT   268435456 AS Value, 0 AS [Sign] UNION ALL
+            SELECT   134217728 AS Value, 0 AS [Sign] UNION ALL
+            SELECT    67108864 AS Value, 0 AS [Sign] UNION ALL
+            SELECT    33554432 AS Value, 0 AS [Sign] UNION ALL
+            SELECT    16777216 AS Value, 0 AS [Sign] UNION ALL
+            SELECT     8388608 AS Value, 0 AS [Sign] UNION ALL
+            SELECT     4194304 AS Value, 0 AS [Sign] UNION ALL
+            SELECT     2097152 AS Value, 0 AS [Sign] UNION ALL
+            SELECT     1048576 AS Value, 0 AS [Sign] UNION ALL
+            SELECT      524288 AS Value, 0 AS [Sign] UNION ALL
+            SELECT      262144 AS Value, 0 AS [Sign] UNION ALL
+            SELECT      131072 AS Value, 0 AS [Sign] UNION ALL
+            SELECT       65536 AS Value, 0 AS [Sign] UNION ALL
+            SELECT       32768 AS Value, 0 AS [Sign] UNION ALL
+            SELECT       16384 AS Value, 0 AS [Sign] UNION ALL
+            SELECT        8192 AS Value, 0 AS [Sign] UNION ALL
+            SELECT        4096 AS Value, 0 AS [Sign] UNION ALL
+            SELECT        2048 AS Value, 0 AS [Sign] UNION ALL
+            SELECT        1024 AS Value, 0 AS [Sign] UNION ALL
+            SELECT         512 AS Value, 0 AS [Sign] UNION ALL
+            SELECT         256 AS Value, 0 AS [Sign] UNION ALL
+            SELECT         128 AS Value, 0 AS [Sign] UNION ALL
+            SELECT          64 AS Value, 0 AS [Sign] UNION ALL
+            SELECT          32 AS Value, 0 AS [Sign] UNION ALL
+            SELECT          16 AS Value, 0 AS [Sign] UNION ALL
+            SELECT           8 AS Value, 0 AS [Sign] UNION ALL
+            SELECT           4 AS Value, 0 AS [Sign] UNION ALL
+            SELECT           2 AS Value, 0 AS [Sign] UNION ALL
+            SELECT           1 AS Value, 0 AS [Sign]
          ),
       PartialProducts
-      AS ( SELECT (I.LHS * B.Value) % 4294967296 AS PartialProduct
-           FROM   Inputs AS I
-                  INNER JOIN Bits AS B
-                  ON ((FLOOR(I.RHS / B.Value) % 2) > 0)
+      AS (  SELECT (P.Product % 4294967296) AS PartialProduct
+            FROM   Inputs AS I
+                   INNER JOIN Bits AS B
+                   ON ((I.RHS & B.Value) != 0)
+                   CROSS APPLY ( SELECT CONVERT(DECIMAL(19, 0), CASE B.[Sign] WHEN 1 THEN 2147483648 ELSE B.Value END) AS ValueDecimal ) AS D
+                   CROSS APPLY ( SELECT CONVERT(DECIMAL(19, 0), I.LHS) * D.ValueDecimal AS Product ) AS P
          )
       SELECT CASE WHEN (F.Product > 2147483647)
                 THEN CONVERT(INT, (F.Product - 2147483648)) | -2147483648
